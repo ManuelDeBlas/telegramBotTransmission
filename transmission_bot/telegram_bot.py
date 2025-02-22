@@ -7,7 +7,7 @@ from telegram.ext import (Updater,
 from broker import TransmissionBroker
 from transmissionrpc.error import TransmissionError
 
-from cfg import TOKEN
+from cfg import TOKEN, ALLOWED_USER
 
 HELP_TEXT = """Transmission Telegram bot
 Usage:
@@ -37,25 +37,22 @@ def telegram_error(bot, update, error):
     logging.error(error_message)
 
 
+def check_allowed_user(func):
+    def wrapper(bot, update, *args, **kwargs):
+        if update.message.from_user.username != ALLOWED_USER:
+            bot.sendMessage(chat_id=update.message.chat_id,
+                            text="You are not authorized to use this bot.")
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapper
+
+@check_allowed_user
 def help_command(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
                     text=HELP_TEXT)
 
 
-def add_command(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id,
-                    text="Adding torrent to Transmission")
-
-    try:
-        global_broker.add_torrent(
-            update.message.chat_id, update.message.text.split(' ', 1)[1])
-
-        bot.sendMessage(chat_id=update.message.chat_id,
-                        text="Torrent successfully added")
-    except TransmissionError as e:
-        transmission_error(bot, update, e)
-
-
+@check_allowed_user
 def list_command(bot, update):
     try:
         torrents = global_broker.retrieve_list(update.message.chat_id)
@@ -74,8 +71,8 @@ def start_bot():
     list_handler = CommandHandler('list', list_command)
     dispatcher.add_handler(list_handler)
 
-    add_handler = CommandHandler('add', add_command)
-    dispatcher.add_handler(add_handler)
+    # add_handler = CommandHandler('add', add_command)
+    # dispatcher.add_handler(add_handler)
 
     help_handler = CommandHandler('help', help_command)
     dispatcher.add_handler(help_handler)

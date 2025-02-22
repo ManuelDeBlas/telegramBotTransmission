@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  telegram_bot:
+    build: .
+    environment:
+      - ADDRESS=${ADDRESS}
+      - PORT=${PORT}
+      - TS_USER=${TS_USER}
+      - TS_PASSWORD=${TS_PASSWORD}
+      - TOKEN=${TOKEN}
+      - PERSISTENCE_FILE=${PERSISTENCE_FILE}
+      - ALLOWED_USER=${ALLOWED_USER}
+    ports:
+      - "8000:8000"
